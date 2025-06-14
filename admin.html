@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waffle N More - Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="waffle.png">
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #fff3e6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #783f24;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: #a55233;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background-color: #783f24;
+        }
+
+        .btn-danger {
+            background-color: #ff6b6b;
+        }
+
+        .btn-danger:hover {
+            background-color: #ff5252;
+        }
+
+        .btn-success {
+            background-color: #4CAF50;
+        }
+
+        .btn-success:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #a55233;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fffaf4;
+        }
+
+        tr:hover {
+            background-color: #fff3e6;
+        }
+
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #a55233;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #783f24;
+        }
+
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #d59b6a;
+            border-radius: 5px;
+        }
+
+        .whatsapp-btn {
+            background-color: #25D366;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .bulk-message-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #d59b6a;
+        }
+
+        .bulk-message-section textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #d59b6a;
+            border-radius: 5px;
+            resize: vertical;
+        }
+
+        .bulk-message-section .checkbox-group {
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .bulk-message-section .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .bulk-message-section .checkbox-item input {
+            margin-right: 10px;
+        }
+
+        .select-all-group {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+
+        .bulk-send-btn {
+            background-color: #25D366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .bulk-send-btn:hover {
+            background-color: #128C7E;
+        }
+
+        .bulk-send-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginForm" class="login-container">
+        <h2>Admin Login</h2>
+        <input type="password" id="adminPassword" placeholder="Enter admin password">
+        <button class="btn" onclick="login()">Login</button>
+    </div>
+
+    <div id="adminPanel" class="container hidden">
+        <h1>Customer Database</h1>
+        
+        <div class="instructions">
+            <h3>How to use this page:</h3>
+            <ol>
+                <li>Click "Refresh Data" to see the latest customer information</li>
+                <li>Click "Download Data" to save all customer information as a CSV file</li>
+                <li>Click the WhatsApp icon next to any customer to send them a message</li>
+                <li>Use the Bulk Message section to send messages to multiple customers</li>
+                <li>Click "Clear Data" only if you want to remove all customer records</li>
+            </ol>
+        </div>
+
+        <div class="button-group">
+            <button class="btn" onclick="fetchCustomers()">Refresh Data</button>
+            <button class="btn btn-success" onclick="downloadData()">Download Data</button>
+            <button class="btn btn-success" onclick="copyAllPhones()">Copy All Phone Numbers</button>
+            <button class="btn btn-success" onclick="copyAllData()">Copy All Data</button>
+            <button class="btn btn-danger" onclick="clearData()">Clear Data</button>
+            <button class="btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="bulk-message-section">
+            <h2>Bulk WhatsApp Message</h2>
+            <div class="select-all-group">
+                <label>
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                    Select All Customers
+                </label>
+            </div>
+            <div class="checkbox-group" id="customerCheckboxes">
+                <!-- Customer checkboxes will be added here -->
+            </div>
+            <textarea id="bulkMessage" placeholder="Enter your message here..."></textarea>
+            <button class="bulk-send-btn" onclick="sendBulkMessages()" id="bulkSendBtn" disabled>
+                Send to Selected Customers
+            </button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone Number</th>
+                    <th>Date Added</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="customerTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            // You'll need to replace these with your Firebase config
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Set admin password (you should change this to a secure password)
+        const ADMIN_PASSWORD = "waffle123";
+
+        function login() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                fetchCustomers();
+            } else {
+                alert('Incorrect password');
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+        }
+
+        async function fetchCustomers() {
+            try {
+                const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+                const tableBody = document.getElementById('customerTableBody');
+                const checkboxContainer = document.getElementById('customerCheckboxes');
+                tableBody.innerHTML = '';
+                checkboxContainer.innerHTML = '';
+                
+                if (customers.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="4" style="text-align: center;">No customers found</td>';
+                    tableBody.appendChild(row);
+                    return;
+                }
+                
+                customers.forEach((customer, index) => {
+                    // Add to table
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${customer.name || 'N/A'}</td>
+                        <td>${customer.phone || 'N/A'}</td>
+                        <td>${customer.date || 'N/A'}</td>
+                        <td>
+                            <a href="https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}" target="_blank" class="whatsapp-btn">
+                                WhatsApp
+                            </a>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+
+                    // Add to checkbox list
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'checkbox-item';
+                    checkboxItem.innerHTML = `
+                        <input type="checkbox" id="customer${index}" value="${customer.phone}" onchange="updateBulkSendButton()">
+                        <label for="customer${index}">${customer.name} (${customer.phone})</label>
+                    `;
+                    checkboxContainer.appendChild(checkboxItem);
+                });
+
+                updateBulkSendButton();
+            } catch (error) {
+                console.error('Error:', error);
+                const tableBody = document.getElementById('customerTableBody');
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Error loading customer data</td></tr>';
+            }
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.checkbox-item input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            updateBulkSendButton();
+        }
+
+        function updateBulkSendButton() {
+            const message = document.getElementById('bulkMessage').value.trim();
+            const selectedCustomers = document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked');
+            const bulkSendBtn = document.getElementById('bulkSendBtn');
+            bulkSendBtn.disabled = selectedCustomers.length === 0 || message === '';
+        }
+
+        function sendBulkMessages() {
+            const message = document.getElementById('bulkMessage').value.trim();
+            const selectedCustomers = document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked');
+            
+            if (selectedCustomers.length === 0 || !message) {
+                alert('Please select customers and enter a message');
+                return;
+            }
+
+            if (confirm(`Are you sure you want to send this message to ${selectedCustomers.length} customers?`)) {
+                selectedCustomers.forEach(checkbox => {
+                    const phone = checkbox.value;
+                    const encodedMessage = encodeURIComponent(message);
+                    window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodedMessage}`, '_blank');
+                });
+            }
+        }
+
+        // Add event listener for message textarea
+        document.getElementById('bulkMessage').addEventListener('input', updateBulkSendButton);
+
+        async function downloadData() {
+            try {
+                const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+                if (customers.length === 0) {
+                    alert('No customer data to download');
+                    return;
+                }
+
+                // Convert to CSV
+                const csvContent = [
+                    ['Name', 'Phone Number', 'Date Added'],
+                    ...customers.map(customer => [
+                        customer.name || '',
+                        '="' + (customer.phone || '') + '"',
+                        customer.date || ''
+                    ])
+                ].map(row => row.join(',')).join('\n');
+
+                // Create download link
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `waffle_n_more_customers_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error downloading data. Please try again.');
+            }
+        }
+
+        async function clearData() {
+            if (confirm('Are you sure you want to clear all customer data? This cannot be undone!')) {
+                try {
+                    const snapshot = await db.collection('customers').get();
+                    const batch = db.batch();
+                    snapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    fetchCustomers();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error clearing data. Please try again.');
+                }
+            }
+        }
+
+        function copyAllPhones() {
+            const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            if (customers.length === 0) {
+                alert('No customer data to copy');
+                return;
+            }
+            // Only unique, valid phone numbers
+            const phones = [...new Set(customers.map(c => c.phone).filter(Boolean))];
+            // Join as comma-separated, you can change to '\\n' for line-separated if needed
+            const phoneString = phones.join(',');
+            navigator.clipboard.writeText(phoneString).then(() => {
+                alert('All phone numbers copied to clipboard!');
+            }, () => {
+                alert('Failed to copy phone numbers.');
+            });
+        }
+
+        function copyAllData() {
+            const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            if (customers.length === 0) {
+                alert('No customer data to copy');
+                return;
+            }
+            const rows = [
+                ['Name', 'Phone Number', 'Date Added'],
+                ...customers.map(c => [c.name, c.phone, c.date])
+            ];
+            const text = rows.map(row => row.join('\t')).join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                alert('All customer data copied to clipboard!');
+            }, () => {
+                alert('Failed to copy data.');
+            });
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            fetchCustomers();
+        }
+    </script>
+</body>
+</html> 
