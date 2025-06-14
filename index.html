@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Waffle N More</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="waffle.png">
+  <!-- Add Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background: url("image2.jpg.jpg") no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(6px);
+      z-index: -1;
+    }
+
+    .container {
+      background-color: #fff3e6;
+      padding: 3rem;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      animation: slideIn 1s ease-out forwards;
+      max-width: 400px;
+      width: 90%;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .brand {
+      font-family: 'Pacifico', cursive;
+      color: #783f24;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .brand img {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 0.5rem;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      text-align: left;
+      font-weight: 700;
+      color: #5c2c14;
+    }
+
+    input[type="text"],
+    input[type="tel"] {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.3rem;
+      border: 2px solid #d59b6a;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: border 0.3s ease;
+      background-color: #fffaf4;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #8b4513;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      background-color: #a55233;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #783f24;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #774c3e;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff3e6;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      display: none;
+      text-align: center;
+      z-index: 1000;
+    }
+
+    .popup.show {
+      display: block;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .admin-link {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #783f24;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .admin-link:hover {
+      background-color: #5c2c14;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      
+      <span>Waffle N More</span>
+    </div>
+    <form id="loginForm">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required />
+
+      <label for="phone">Phone Number</label>
+      <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" required />
+
+      <button type="submit">Login</button>
+    </form>
+    <div class="footer">We value your taste. Welcome to the Waffle N More experience!</div>
+  </div>
+
+  <div class="popup" id="successPopup">
+    <h2>Welcome to Waffle N More!</h2>
+    <p> Welcome to the Waffle N More experience!</p>
+  </div>
+
+  <a href="admin.html" class="admin-link">Admin Panel</a>
+
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      // You'll need to replace these with your Firebase config
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const form = document.getElementById('loginForm');
+    const popup = document.getElementById('successPopup');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const date = new Date().toISOString();
+
+      if (!name || !phone) {
+        alert('Please enter both name and phone number.');
+        return;
+      }
+
+      // Get existing customers or initialize empty array
+      const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+      
+      // Add new customer
+      customers.push({
+        name: name,
+        phone: phone,
+        date: date
+      });
+      
+      // Save back to localStorage
+      localStorage.setItem('customers', JSON.stringify(customers));
+
+      // Show success popup
+      popup.classList.add('show');
+      setTimeout(() => popup.classList.remove('show'), 3000);
+      form.reset();
+    });
+  </script>
+</body>
+</html>
